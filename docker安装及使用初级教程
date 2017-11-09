@@ -1,0 +1,87 @@
+     具体操作过程
+1	安装docker的流程
+①  获取最新版本的docker安装包
+命令：wget -qO- https://get.docker.com/ | sh
+ 
+②  启动docker后台服务
+命令：sudo service docker start
+③   测试运行hello-world
+命令：docker run hello-world
+
+2	启动一个镜像（相当于启动一个虚拟机）,创建容器，容器与镜像的关系就相当于对象与类，输出“hello world”
+ 
+至此，此时我们已进入一个 ubuntu15.10系统的容器。我们可以通过docker ps命令来查看docker容器是否在运行，如下截图所示:
+ 
+
+3	创建mysql镜像与容器
+①  拉取网易蜂巢的mysql-server: 5.6。（也可自己通过dockerfile文件来自己创建镜像）
+命令：docker pull hub.c.163.com/nce2/mysql:5.6
+ 
+②  创建mysql5.6容器
+命令：docker run --name mysql-master -d -P hub.c.163.com/nce2/mysql:5.6
+ 
+③  通过主机进入master容器
+命令：docker exec -it mysql-master bash
+④  在master中创建一个数据库test_docker
+进入数据库命令：mysql -uroot -p
+  
+  
+    进入这个可以进行数据库的各种操作
+4	创建python镜像与容器
+①  拉取官方的镜像，标签为3.5来创建python镜像
+命令：docker pull python:3.5
+②  使用python镜像
+在某目录下创建一个helloworld.py文件，如下：
+ 
+
+③  运行容器
+使用docker ps可以查看当前正在运行的容器
+  
+
+5	安装tomcat镜像与创建容器
+①  安装tomcat镜像
+从官网上拉取我们所需要的镜像
+ 
+②  使用tomcat镜像来创建容器
+ 
+这里使用了8080端口
+ 查看本机ip地址。这个ip地址加上端口号即可访问tomcat页面，成功的截图如下：
+ 
+
+6	将java web war包部署到tomcat容器中，包含mysql。
+
+I  创建自己的tomcat镜像
+①  编写Dockerfile文件，如下：
+在编写Dockerfile文件前，先要拉取一个基础镜像
+ 
+
+Dockerfile文件如下：
+ 
+第一行：第一行表示继承自一个基础镜像，基础镜像为：docker pull hub.c.163.com/library/tomcat:latest（一个第三方的镜像，来自网易蜂巢）
+第二行：第二行是编写着的一些所有者信息，可写可不不写。
+第三行：第三行是将我的java web应用（格式为war包）放到tomcat的webapps目录下，这样做的目的是，只要tomcat一启动，java web程序就会自动运行。
+（注意Dockerfile与war包要放在同一目录下）
+②  利用Dockerfile文件来创建一个镜像
+命令：docker build -t jpress:latest .
+表示在当前目录下创建一个容器，-t表示将该镜像命名为jpress:latest
+创建成功如下：
+ 
+
+II  创建mysql镜像
+从第三方拉取一个镜像，命令如下：
+     docker pull hub.c.163.com/library/mysql:latest
+
+III  将两者结合起来
+
+① 先启动一个mysql容器
+命令：docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=000000 -e MYSQL_DATABASE=jpress hub.c.163.com/library/mysql:latest
+这里主要是设置一些端口映射，数据库密码，数据库名称，(数据库用户名默认为root)
+
+②  启动tomcat容器
+命令： docker run -p 8888:8080 --link condescending_mestorf:mysql -d jpress
+condescending_mestorf 是MySQL容器别名。可见docker ps 的name列
+ 
+③  设置成功，即可通过浏览器访问
+访问形式：http://host_ip/war包名/install
+ 
+如上图表示将java web项目打包到docker成功。
